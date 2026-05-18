@@ -1,0 +1,120 @@
+this file will contain the styling of the project application
+/* Global */
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f9;
+    margin: 0;
+    padding: 20px;
+}
+
+/* Layout */
+.container {
+    max-width: 1000px;
+    margin: auto;
+    position: relative;
+    right: 25px;
+    top: 5px;
+}
+
+.sentimentcontainer {
+    position: relative;
+    left: 25px;
+  
+    
+}
+/* Cards */
+.card {
+    background: white;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* Form */
+.form-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Inputs */
+.input-box {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+/* Button */
+.btn-primary {
+    background: #2ecc71;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-primary:hover {
+    background: #27ae60;
+}
+
+/* Table */
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.styled-table th, .styled-table td {
+    padding: 10px;
+    text-align: center;
+}
+
+.styled-table th {
+    background: #2c3e50;
+    color: white;
+}
+
+.styled-table tr:nth-child(even) {
+    background: #f2f2f2;
+}
+
+/* Headings */
+h3 {
+    margin-top: 0;
+    color: #2c3e50;
+}
+
+/* Lists */
+ul {
+    padding-left: 20px;
+}
+
+li {
+    margin-bottom: 8px;
+}
+
+/* Canvas */
+canvas {
+    display: block;
+    margin: 20px auto;
+}
+
+/* Download buttons */
+#downloadChart, #downloadCloud {
+    display: block;
+    margin: 10px auto;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    background: #3498db;
+    color: white;
+    cursor: pointer;
+}
+
+#downloadChart:hover, #downloadCloud:hover {
+    background: #2980b9;
+}
+

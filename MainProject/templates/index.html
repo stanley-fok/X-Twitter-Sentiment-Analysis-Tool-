@@ -1,0 +1,210 @@
+<!-- this file is the HTML file which handles the UI of the project -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/app.css"> <!-- import css file -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- import chart js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.2.2/wordcloud2.min.js"></script> <!-- import wordcloud -->
+    <title></title>
+</head>
+
+<body>
+    <div class="container">
+        {% if error_message %}
+            <p style="color: red; font-weight: bold;">{{ error_message }}</p>
+        {% endif %}
+
+    <form method="POST" class="card form-card">
+    <textarea name="tweet" class="input-box" placeholder="Enter Hashtag/Keyword...">{{ input_text or '' }}</textarea>
+    
+    <select name="model" class="input-box">
+        <option value="Logistic Regression" {% if model == "Logistic Regression" %}selected{% endif %}>Logistic Regression</option>
+        <option value="Naive Bayes" {% if model == "Naive Bayes" %}selected{% endif %}>Naive Bayes</option>
+        <option value="VADER" {% if model == "VADER" %}selected{% endif %}>VADER (Rule-based)</option>
+        <option value="RoBERTa" {% if model == "RoBERTa" %}selected{% endif %}>RoBERTa</option>
+        <option value="DistilBERT" {% if model == "DistilBERT" %}selected{% endif %}>DistilBERT</option>
+    </select>
+
+    <label for="topic">Select Topic:</label>
+    <select name="topic" class="input-box">
+        <option value="">All Topics</option>
+    
+        <!-- iterate over topic labels from options -->
+        {% for id, name in topic_labels.items() %}
+            <option value="{{ id }}" {% if topic and topic|int == id %}selected{% endif %}> 
+                {{ name }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <label for="num_posts">Number of Posts to Analyse:</label>
+    <input 
+        type="number" 
+        name="num_posts" 
+        class="input-box"
+        min="1" 
+        max="200" 
+        value="{{ num_posts }}"
+    >
+
+    <button type="submit" class="btn-primary">Predict</button>
+    </form>
+    </div>
+
+    <!-- use jinja to show simple frontend logic for displaying tables and text using python -->
+    <!-- displlay summary of current sentiment analysis results -->
+    <div class="sentimentcontainer">
+    {% if prediction is not none %}
+    <h3>Predicted Sentiment</h3>
+    <p style="color: #2c3e50; font-weight: bold;"><strong>Model:</strong> {{ prediction.model }}</p>
+    <p style="color: #2c3e50; font-weight: bold;"><strong>Sentiment:</strong> {{ prediction.label | capitalize }}</p>
+    <p style="color: #2c3e50; font-weight: bold;"><strong>Sentiment ID:</strong> {{ prediction.label_id | capitalize }}</p>
+    <p style="color: #2c3e50; font-weight: bold;"><strong>Confidence:</strong> {{ "%.2f"|format(prediction.score) }}</p>
+    <p style="color: #2c3e50; font-weight: bold;"><strong>Text:</strong> {{ input_text }}</p>
+    {% endif %}
+    </div>
+    
+    <!-- hide results section if no comparison data is available -->
+    <div id="results-section" style="display: {{ 'block' if comparison else 'none' }};">
+        {% if comparison %}
+        <div class="card">
+            <h3>Model Comparison</h3>
+            <table border="1" class="styled-table">
+                <tr>
+                    <th>Model</th>
+                    <th>Sentiment</th>
+                    <th>Scores/Compound Score (VADER)</th>
+                </tr>
+
+                {% for r in comparison %}
+                <!-- table row and table data -->
+                <tr> 
+                    <td>{{ r.model }}</td>
+                    <td>{{ r.label }}</td>
+                    <td>
+            {% if r.score is not none %}
+                {{ "%.2f"|format(r.score) }}
+            {% else %}
+                N/A
+            {% endif %}
+            </td>
+
+                </tr>
+                {% endfor %}
+            </table>
+        
+        </div>
+        
+        {% if sentiment_counts %} 
+        <!-- chart.js -->
+        <div class="card">
+            <canvas id="sentimentChart" width="400" height="200"></canvas> <!-- canvas to define sentimentchart for display -->
+            <button id="downloadChart">Download Sentiment Chart</button> <!-- button to download sentimentchart-->
+            <script>
+            const ctx = document.getElementById('sentimentChart').getContext('2d');
+
+            const sentimentChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['negative', 'neutral', 'positive'],
+                    datasets: [{
+                        label: 'Predicted Sentiment Distribution',
+                        data: [
+                            // obtained from app.py; by default values are 0 but changes through filter
+                            {{ sentiment_counts.get("negative", 0) }}, 
+                            {{ sentiment_counts.get("neutral", 0) }},
+                            {{ sentiment_counts.get("positive", 0) }}
+                        ],
+                        backgroundColor: ['#e74c3c', '#f1c40f', '#2ecc71'] 
+                    }]
+                }
+            });
+            
+            document.getElementById('downloadChart').addEventListener('click', function() {  //function to make button functional
+                const link = document.createElement('a'); //creates anchor tag which allows for download and link function to be used
+                link.href = sentimentChart.toBase64Image();
+                link.download = 'sentiment_chart.png';
+                link.click();
+            });
+            </script>
+        </div>
+        <div class="card">
+        <h3>Most Frequent Words</h3>
+            <canvas id="wordCloud" width="500" height="300"></canvas> <!-- canvas to define wordcloud for display -->
+            <button id="downloadCloud">Download Word Cloud</button> <!-- button to download wordcloud -->
+        </div>
+
+        
+        <div class="card">
+            <h3>Top Sentiment Posts</h3>
+            <div class="posts-container">
+                <div class="post-box">
+                    <h3>Sentiment Model Top Positive Posts</h3>
+                    {% if top_positive_posts %}
+                        <ul>
+                        {% for post in top_positive_posts %}
+                            <li>{{ post.text }} (Score: {{ "%.2f"|format(post.score) }})</li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No positive posts found for this model.</p>
+                    {% endif %}           
+
+
+                    <h3>Sentiment Model Top Negative Posts </h3>
+                    <ul>
+                    {% for post in top_negative_posts %}
+                        <li>
+                            {{ post.text }} 
+                            (Score: {{ "%.2f"|format(post.score) }})
+                        </li>
+                    {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <script>
+
+    const wordList = [ //collects word counts from app.py and formats them for wordcloud2.js; each word and its count is stored as a list in the format [word, count]
+        {% for word, count in word_counts %}
+            ["{{ word }}", {{ count }}],
+        {% endfor %}
+    ];
+
+
+
+    WordCloud(document.getElementById('wordCloud'), {  //render the word cloud 
+        list: wordList,
+        gridSize: 8,
+        weightFactor: 10,
+        color: 'random-dark',
+        backgroundColor: '#fff'
+    });
+
+    document.getElementById('downloadCloud').addEventListener('click', function() { //function to make button functional
+        const canvas = document.getElementById('wordCloud');
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL("image/png");
+        a.download = "word_cloud.png";
+        a.click();
+    });
+    </script>
+    {% endif %}
+
+
+
+
+    </div>
+</body>
+</html>
+
+
+
+
+
+

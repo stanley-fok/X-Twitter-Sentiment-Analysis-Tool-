@@ -1,0 +1,3 @@
+AI generated:
+
+I selected models from three major NLP paradigms—rule-based, classical ML, and transformer-based deep learning—to give users flexibility, enable comparison, and support different use cases such as speed, explainability, and accuracy.
